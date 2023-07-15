@@ -15,6 +15,9 @@ function App() {
   const [realBoard, setRealBoard] = useState([]);
   const [displayBoard, setDisplayBoard] = useState([]);
 
+  var leftClick = false;
+  var rightClick = false;
+
   const getIndex = (x, y) => {
     return y * boardInfo.width + x;
   };
@@ -33,7 +36,7 @@ function App() {
       _.each(_.range(boardInfo.height), (y) => {
         const index = getIndex(x, y);
         if (_.includes(mineList, index)) {
-          newRealBoard.push("m");
+          newRealBoard.push("x");
           return;
         }
 
@@ -57,8 +60,58 @@ function App() {
     setDisplayBoard(Array(boardSize).fill("untrigger"));
   };
 
+  const trigger = () => {
+    console.log("left");
+  };
+
+  const triggerFlag = () => {
+    console.log("right");
+  };
+
+  const autoSpread = () => {
+    console.log("both");
+  };
+
+  const gameOver = () => {};
+
+  const handleTrigger = _.debounce(() => {
+    if (leftClick && rightClick) {
+      autoSpread();
+      leftClick = false;
+      rightClick = false;
+      return;
+    }
+
+    if (leftClick) {
+      trigger();
+      leftClick = false;
+      return;
+    }
+
+    triggerFlag();
+    rightClick = false;
+  }, 100);
+
+  const handleClick = (e) => {
+    if (e.button === 0) {
+      leftClick = true;
+    } else if (e.button === 2) {
+      rightClick = true;
+    }
+    handleTrigger();
+  };
+
   useEffect(() => {
     newGame();
+
+    const handleContextMenu = (e) => {
+      e.preventDefault();
+    };
+
+    document.addEventListener("contextmenu", handleContextMenu);
+    return () => {
+      document.removeEventListener("contextmenu", handleContextMenu);
+    };
   }, []);
 
   return (
@@ -80,6 +133,7 @@ function App() {
                 {_.map(displayBoard, (value, index) => {
                   return (
                     <Grid2
+                      key={`cell-box-${index}`}
                       className="cell-box"
                       style={{
                         width: cellSize,
@@ -87,7 +141,9 @@ function App() {
                       }}
                       xs={1}
                     >
-                      <div>{index}</div>
+                      <div className={value} onMouseDown={handleClick}>
+                        {index}
+                      </div>
                     </Grid2>
                   );
                 })}
