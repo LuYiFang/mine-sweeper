@@ -37,6 +37,7 @@ div.flex-end {
   border-color: white;
   border-style: solid;
   border-width: 1px;
+  user-select: none;
 }
 
 .cell-box div {
