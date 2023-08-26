@@ -2,20 +2,30 @@ import Grid2 from "@mui/material/Unstable_Grid2/Grid2";
 import "./App.css";
 import _ from "lodash";
 import { useEffect, useState } from "react";
-import { Box, Button, Container } from "@mui/material";
+import { Box, Button, Container, MenuItem, Select } from "@mui/material";
 
 const cellSize = 30;
-
-function App() {
-  const [boardInfo, setBoardInfo] = useState({
+const sizeItem = {
+  small: {
     width: 10,
     height: 9,
-    mine: 9,
+    mine: 18,
+    size: "small",
+  },
+  large: {
+    width: 26,
+    height: 18,
+    mine: 80,
     size: "large",
-  });
+  },
+};
+
+function App() {
+  const [boardInfo, setBoardInfo] = useState(sizeItem.large);
   const [realBoard, setRealBoard] = useState([]);
   const [displayBoard, setDisplayBoard] = useState([]);
   const [title, setTitle] = useState("");
+  const [mineCount, setMineCount] = useState(boardInfo.mine);
 
   var leftClick = false;
   var rightClick = false;
@@ -32,7 +42,8 @@ function App() {
     const boardSize = boardInfo.width * boardInfo.height;
     const mineList = _.sampleSize(_.range(boardSize), boardInfo.mine);
 
-    setTitle("new game");
+    setMineCount(mineList.length);
+    setTitle(`${mineList.length}`);
 
     let newRealBoard = [];
 
@@ -102,8 +113,16 @@ function App() {
 
     const newDisplayBoard = [...displayBoard];
 
-    let classValue = "flag";
-    if (newDisplayBoard[index] === "flag") classValue = "untrigger";
+    let newMineCount = mineCount + 1;
+    let classValue = "untrigger";
+    if (newDisplayBoard[index] !== "flag") {
+      newMineCount -= 2;
+
+      classValue = "flag";
+    }
+
+    console.log("new", newMineCount);
+    setMineCount(newMineCount);
     newDisplayBoard[index] = classValue;
     setDisplayBoard(newDisplayBoard);
   };
@@ -185,6 +204,24 @@ function App() {
     });
   };
 
+  const checkGameStatus = () => {
+    let flagCount = 0;
+    let isUnfinished = _.some(displayBoard, (status, i) => {
+      if (status === "untrigger") return true;
+      if (status === "flag") {
+        flagCount++;
+      }
+    });
+
+    if (flagCount < mineCount) {
+      isUnfinished = true;
+    }
+
+    if (!isUnfinished) {
+      setTitle("You Win!");
+    }
+  };
+
   const gameOver = () => {
     setTitle("game over");
     setDisplayBoard(
@@ -237,6 +274,18 @@ function App() {
     };
   }, []);
 
+  useEffect(() => {
+    newGame();
+  }, [boardInfo.size]);
+
+  useEffect(() => {
+    setTitle(`${mineCount}`);
+  }, [mineCount]);
+
+  useEffect(() => {
+    checkGameStatus();
+  }, [displayBoard]);
+
   return (
     <div className="App">
       <main className="full-size">
@@ -245,6 +294,23 @@ function App() {
           className="full-size flex-vertical-center"
           rowSpacing={2}
         >
+          <Grid2 xs={12}>
+            <Select
+              size="small"
+              value={boardInfo.size}
+              onChange={(e) => {
+                setBoardInfo(sizeItem[e.target.value]);
+              }}
+            >
+              {_.map(_.keys(sizeItem), (k) => {
+                return (
+                  <MenuItem key={`size-item-${k}`} value={k}>
+                    {k}
+                  </MenuItem>
+                );
+              })}
+            </Select>
+          </Grid2>
           <Grid2 xs={12} className="board-title">
             {title}
           </Grid2>
